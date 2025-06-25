@@ -1,0 +1,65 @@
+{
+  "name": "alter8-platform",
+  "version": "1.0.0",
+  "description": "Alter8 Multi-Product Real Estate Platform - Comprehensive SaaS platform for real estate management",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/notification-service",
+    "services/contact-service", 
+    "services/sharing-service",
+    "services/maintenance-service",
+    "services/api-gateway"
+  ],
+  "scripts": {
+    "dev": "docker-compose up -d && npm run dev:frontend",
+    "dev:frontend": "concurrently \"npm run dev -w alter8-residential\" \"npm run dev -w alter8-property\" \"npm run dev -w alter8-admin\"",
+    "dev:node-services": "concurrently \"npm run dev -w notification-service\" \"npm run dev -w contact-service\" \"npm run dev -w sharing-service\" \"npm run dev -w maintenance-service\"",
+    "dev:python-services": "./scripts/python-services.sh dev",
+    "build": "npm run build:packages && npm run build:frontend && npm run build:node-services",
+    "build:packages": "npm run build -w shared-types -w ui-components -w api-client -w utils -w config",
+    "build:frontend": "npm run build -w alter8-residential -w alter8-property -w alter8-admin",
+    "build:node-services": "npm run build -w notification-service -w contact-service -w sharing-service -w maintenance-service -w api-gateway",
+    "test": "npm run test:packages && npm run test:frontend && npm run test:node-services",
+    "test:packages": "npm run test -w shared-types -w ui-components -w api-client -w utils -w config",
+    "test:frontend": "npm run test -w alter8-residential -w alter8-property -w alter8-admin",
+    "test:node-services": "npm run test -w notification-service -w contact-service -w sharing-service -w maintenance-service -w api-gateway",
+    "test:e2e": "playwright test",
+    "lint": "npm run lint:packages && npm run lint:frontend && npm run lint:node-services",
+    "lint:packages": "npm run lint -w shared-types -w ui-components -w api-client -w utils -w config",
+    "lint:frontend": "npm run lint -w alter8-residential -w alter8-property -w alter8-admin",
+    "lint:node-services": "npm run lint -w notification-service -w contact-service -w sharing-service -w maintenance-service -w api-gateway",
+    "typecheck": "npm run typecheck:packages && npm run typecheck:frontend",
+    "typecheck:packages": "npm run typecheck -w shared-types -w ui-components -w api-client -w utils -w config",
+    "typecheck:frontend": "npm run typecheck -w alter8-residential -w alter8-property -w alter8-admin",
+    "format": "prettier --write \"apps/**\" \"packages/**\" \"services/{notification,contact,sharing,maintenance,api-gateway}-service/**\"",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "clean": "rimraf node_modules apps/*/node_modules packages/*/node_modules services/{notification,contact,sharing,maintenance,api-gateway}-service/node_modules",
+    "postinstall": "npm run build:packages"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.8.0",
+    "concurrently": "^8.2.2",
+    "prettier": "^3.0.3",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "real-estate",
+    "property-management",
+    "saas",
+    "multiproduct",
+    "platform"
+  ],
+  "author": "Alter8 Residential",
+  "license": "UNLICENSED"
+}

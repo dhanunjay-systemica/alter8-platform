@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: alter8-postgres
+    environment:
+      POSTGRES_USER: alter8_user
+      POSTGRES_PASSWORD: alter8_dev_password
+      POSTGRES_DB: alter8_main_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./tools/db-migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - alter8-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alter8_user -d alter8_main_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: alter8-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: alter8_user
+      MONGO_INITDB_ROOT_PASSWORD: alter8_dev_password
+      MONGO_INITDB_DATABASE: alter8_documents
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - alter8-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/alter8_documents --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7.2-alpine
+    container_name: alter8-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - alter8-network
+    command: redis-server --appendonly yes --requirepass alter8_dev_password
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MinIO (S3-compatible storage for development)
+  minio:
+    image: minio/minio:latest
+    container_name: alter8-minio
+    environment:
+      MINIO_ROOT_USER: alter8_user
+      MINIO_ROOT_PASSWORD: alter8_dev_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - alter8-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Mailhog (Email testing)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: alter8-mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - alter8-network
+
+  # API Gateway (Development proxy)
+  api-gateway-dev:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile.dev
+    container_name: alter8-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_URL=postgresql://alter8_user:alter8_dev_password@postgres:5432/alter8_main_db
+      - MONGODB_URL=mongodb://alter8_user:alter8_dev_password@mongodb:27017/alter8_documents
+      - REDIS_URL=redis://:alter8_dev_password@redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - alter8-network
+    volumes:
+      - ./services/api-gateway:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  alter8-network:
+    driver: bridge
+    name: alter8-network
