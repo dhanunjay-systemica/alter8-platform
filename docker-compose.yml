@@ -117,6 +117,37 @@ services:
       - /app/node_modules
     command: npm run dev
 
+  # Auth Service (Development)
+  auth-service-dev:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile.dev
+    container_name: alter8-auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      - DEBUG=true
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - POSTGRES_SERVER=postgres
+      - POSTGRES_USER=alter8_user
+      - POSTGRES_PASSWORD=alter8_dev_password
+      - POSTGRES_DB=alter8_main_db
+      - REDIS_URL=redis://:alter8_dev_password@redis:6379
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    networks:
+      - alter8-network
+    volumes:
+      - ./services/auth-service:/app
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
 volumes:
   postgres_data:
     driver: local

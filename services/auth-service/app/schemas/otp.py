@@ -10,39 +10,21 @@ from app.models.otp_verification import OTPType
 
 class OTPRequest(BaseModel):
     """OTP request schema"""
-    phone_number: Optional[str] = Field(None, regex=r'^\+?[1-9]\d{1,14}$')
+    phone_number: Optional[str] = Field(None, pattern=r'^\+?[1-9]\d{1,14}$')
     email: Optional[str] = None
     otp_type: OTPType
-    delivery_method: str = Field("whatsapp", regex=r'^(whatsapp|sms|email)$')
+    delivery_method: str = Field("whatsapp", pattern=r'^(whatsapp|sms|email)$')
     context_data: Optional[str] = None
     
-    @validator('phone_number', 'email')
-    def validate_contact_info(cls, v, values, field):
-        phone = values.get('phone_number') if field.name == 'email' else v
-        email = values.get('email') if field.name == 'phone_number' else v
-        
-        if not phone and not email:
-            raise ValueError('Either phone_number or email must be provided')
-        
-        return v
 
 
 class OTPVerify(BaseModel):
     """OTP verification schema"""
-    phone_number: Optional[str] = Field(None, regex=r'^\+?[1-9]\d{1,14}$')
+    phone_number: Optional[str] = Field(None, pattern=r'^\+?[1-9]\d{1,14}$')
     email: Optional[str] = None
     otp_code: str = Field(..., min_length=4, max_length=10)
     otp_type: OTPType
     
-    @validator('phone_number', 'email')
-    def validate_contact_info(cls, v, values, field):
-        phone = values.get('phone_number') if field.name == 'email' else v
-        email = values.get('email') if field.name == 'phone_number' else v
-        
-        if not phone and not email:
-            raise ValueError('Either phone_number or email must be provided')
-        
-        return v
 
 
 class OTPResponse(BaseModel):
@@ -66,6 +48,13 @@ class OTPVerificationResult(BaseModel):
 
 class CustomerOTPAccess(BaseModel):
     """Customer OTP access for properties"""
-    phone_number: str = Field(..., regex=r'^\+?[1-9]\d{1,14}$')
+    phone_number: str = Field(..., pattern=r'^\+?[1-9]\d{1,14}$')
     property_share_token: str
     customer_name: Optional[str] = Field(None, min_length=1, max_length=200)
+
+
+class OTPVerification(BaseModel):
+    """OTP verification schema for auth endpoints"""
+    identifier: str = Field(..., description="Email or phone number")
+    code: str = Field(..., min_length=4, max_length=10)
+    purpose: str = "email_verification"

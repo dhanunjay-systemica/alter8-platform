@@ -8,13 +8,13 @@ version = "0.1.0"
 description = "Alter8 Authentication Service - JWT-based authentication with multi-role support"
 authors = [{name = "Alter8 Residential", email = "dev@alter8residential.com"}]
 license = {text = "UNLICENSED"}
-readme = "README.md"
+# readme = "README.md"
 requires-python = ">=3.11"
 
 dependencies = [
     "fastapi>=0.108.0",
     "uvicorn[standard]>=0.25.0",
-    "pydantic>=2.5.2",
+    "pydantic[email]>=2.5.2",
     "pydantic-settings>=2.1.0",
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
@@ -42,6 +42,9 @@ dev = [
     "mypy>=1.8.0",
     "pre-commit>=3.6.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
 
 [tool.ruff]
 target-version = "py311"

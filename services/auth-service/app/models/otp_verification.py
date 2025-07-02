@@ -7,6 +7,7 @@ from sqlalchemy import Column, DateTime, String, Boolean, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, ENUM
 from sqlalchemy.orm import relationship
 import enum
+import uuid
 
 from app.core.database import Base
 from app.core.config import settings
